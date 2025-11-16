@@ -83,7 +83,7 @@ public static class CitaviMacro
 				DebugMacro.WriteLine("---------------------------");
 
 				Clipboard.SetText(obsidianLink);
-				MessageBox.Show(string.Format("链接已复制到剪贴板！\n\n{0}", obsidianLink), "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				//MessageBox.Show(string.Format("链接已复制到剪贴板！\n\n{0}", obsidianLink), "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
 			}
 			else
 			{
@@ -225,14 +225,14 @@ public static class CitaviMacro
         if (knowledgeItem != null)
         {
             // 如果关联了知识条目，使用知识条目的核心文本作为链接文本
-            linkText = string.Format("{0}, p.{1}", pdfFileName, pageIndex + 1);
+            linkText = string.Format("{0}, p.{1}", parentDirectoryName+" "+ pdfFileName, pageIndex);
             finalLink = string.Format("[{0}]({1}#page={2}&rect={3},{4},{5},{6}&color=yellow) KnowID：{7} AnnotID：{8}",
                 linkText, obsidianRelativePath, pageIndex, obsX1, obsY1, obsX2, obsY2, knowledgeItem.Id.ToStringSafe(), annotation.Id.ToStringSafe());
         }
         else
         {
             // 如果没有关联知识条目，使用文件名作为链接文本
-            linkText = string.Format("{0}, p.{1}", pdfFileName, pageIndex + 1);
+            linkText = string.Format("{0}, p.{1}", parentDirectoryName+" "+ pdfFileName, pageIndex);
             finalLink = string.Format("[{0}{1}]({2}#page={3}&rect={4},{5},{6},{7}&color=yellow) AnnotID：{8}",
                locationGroupname, linkText, obsidianRelativePath, pageIndex, obsX1, obsY1, obsX2, obsY2, annotation.Id.ToStringSafe());
         }

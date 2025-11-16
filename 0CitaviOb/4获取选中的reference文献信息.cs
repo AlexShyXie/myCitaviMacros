@@ -62,7 +62,7 @@ public static class CitaviMacro
 		//DebugMacro.WriteLine(FormatReferenceCitation(reference));
 		string obsidianLink = FormatReferenceCitation(reference);
 		Clipboard.SetText(obsidianLink);
-		MessageBox.Show(string.Format("链接已复制到剪贴板！\n\n{0}", obsidianLink), "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+		//MessageBox.Show(string.Format("链接已复制到剪贴板！\n\n{0}", obsidianLink), "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
 

@@ -76,8 +76,19 @@ public static class CitaviMacro
 		string citaviFilePath = Program.ActiveProjectShell.Project.Addresses.AttachmentsFolderPath;
 		DebugMacro.WriteLine(citaviFilePath);
 	
-		List<KnowledgeItem> selectedKnowledgeItems = mainForm.GetSelectedKnowledgeItems();//mainForm.GetSelectedQuotations();
+		List<KnowledgeItem> selectedKnowledgeItems = null;
+
+		// 根据当前活动的工作区类型选择合适的方法
+		if (mainForm.ActiveWorkspace.ToString() == "ReferenceEditor")
+		{
+			selectedKnowledgeItems = mainForm.GetSelectedQuotations();
+		}
+		else if (mainForm.ActiveWorkspace.ToString() == "KnowledgeOrganizer")
+		{
+			selectedKnowledgeItems = mainForm.GetSelectedKnowledgeItems();
+		}
 		List<Location> selectedLocations = mainForm.GetSelectedElectronicLocations();
+		
 		// 1. 获取用户选中的 KnowledgeItem 和 Location,检查是否只选中了一个引文
 		if (selectedKnowledgeItems == null || selectedKnowledgeItems.Count != 1)
 		{
@@ -133,7 +144,7 @@ public static class CitaviMacro
 	            // 可选：将链接复制到剪贴板
 	            Clipboard.SetText(obsidianLink);
 	            DebugMacro.WriteLine("链接已复制到剪贴板！");
-				MessageBox.Show(string.Format("链接已复制到剪贴板！：{0}",obsidianLink));
+				//MessageBox.Show(string.Format("链接已复制到剪贴板！：{0}",obsidianLink));
 	        }
 	    }
 	    else
