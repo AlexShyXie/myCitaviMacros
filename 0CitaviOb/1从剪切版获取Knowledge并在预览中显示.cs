@@ -10,6 +10,9 @@ using SwissAcademic.Citavi;
 using SwissAcademic.Citavi.Metadata;
 using SwissAcademic.Citavi.Shell;
 using SwissAcademic.Collections;
+using System.Diagnostics;
+using SwissAcademic.Citavi.Shell.Controls.Preview;
+using SwissAcademic.Citavi.Shell.Controls.SmartRepeaters;
 using System.IO;
 // =================================================================================================
 // Citavi 宏：通过剪贴板中的ID定位知识条目并在PDF中跳转
@@ -112,10 +115,19 @@ public static class CitaviMacro
         mainForm.ActiveReferenceEditorTabPage = MainFormReferencesTabPage.Quotations;
 		mainForm.ActiveReference = targetKnowledgeItem.Reference;
 
-		// 3. 核心：通过遍历控件树来找到 QuotationSmartRepeater
-        Control quotationSmartRepeater = Program.ActiveProjectShell.PrimaryMainForm.Controls.Find("quotationSmartRepeater", true).FirstOrDefault();
-        SwissAcademic.Citavi.Shell.Controls.SmartRepeaters.QuotationSmartRepeater quotationSmartRepeaterAsQuotationSmartRepeater = quotationSmartRepeater as SwissAcademic.Citavi.Shell.Controls.SmartRepeaters.QuotationSmartRepeater;
+		// 2. 核心：通过遍历控件树来找到 QuotationSmartRepeater，高亮Knowledge的代码
+		QuotationSmartRepeater quotationSmartRepeaterAsQuotationSmartRepeater = null;
+		if (Program.ActiveProjectShell.PrimaryMainForm.ActiveWorkspace == MainFormWorkspace.KnowledgeOrganizer)
+        {
+            SmartRepeater<KnowledgeItem> KnowledgeItemSmartRepeater = Program.ActiveProjectShell.PrimaryMainForm.Controls.Find("SmartRepeater", true).FirstOrDefault() as SmartRepeater<KnowledgeItem>;
+            quotationSmartRepeaterAsQuotationSmartRepeater = Program.ActiveProjectShell.PrimaryMainForm.Controls.Find("knowledgeItemPreviewSmartRepeater", true).FirstOrDefault() as QuotationSmartRepeater;
 
+        }
+        else if (Program.ActiveProjectShell.PrimaryMainForm.ActiveWorkspace == MainFormWorkspace.ReferenceEditor)
+        {
+            quotationSmartRepeaterAsQuotationSmartRepeater = Program.ActiveProjectShell.PrimaryMainForm.Controls.Find("quotationSmartRepeater", true).FirstOrDefault() as QuotationSmartRepeater;
+        }
+		
 		if (quotationSmartRepeaterAsQuotationSmartRepeater != null)
 		{
 		    // 调用方法进行高亮

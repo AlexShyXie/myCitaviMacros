@@ -1,5 +1,7 @@
 // autoref "SwissAcademic.Pdf.dll"
 
+// autoref "SwissAcademic.Pdf.dll"
+
 using System;
 using System.Linq;
 using System.ComponentModel;
@@ -96,102 +98,85 @@ public static class CitaviMacro
         }
     }
 
-	/// <summary>
-	/// 强制刷新预览区，显示PDF内容，并精确跳转到指定注释 (优化版：轮询执行跳转)。
-	/// </summary>
-	/// <param name="mainForm">Citavi主窗体</param>
-	/// <param name="targetAnnotation">要跳转的目标注释</param>
-	/// <param name="targetLocation">注释关联的位置</param>
-	/// <param name="successWarningMessage">成功跳转后要显示的警告信息</param>
-	private static void JumpToPdfAndHighlightAnnotation(MainForm mainForm, Annotation targetAnnotation, Location targetLocation, string successWarningMessage)
-	{
-	    var previewControl = mainForm.PreviewControl;
-	    object pdfViewControlObject = null;
-	    MethodInfo goToAnnotationMethod = null;
+    /// <summary>
+    /// 强制刷新预览区，显示PDF内容，并精确跳转到指定注释。
+    /// </summary>
+    /// <param name="mainForm">Citavi主窗体</param>
+    /// <param name="targetAnnotation">要跳转的目标注释</param>
+    /// <param name="targetLocation">注释关联的位置</param>
+    /// <param name="successWarningMessage">成功跳转后要显示的警告信息</param>
+    private static void JumpToPdfAndHighlightAnnotation(MainForm mainForm, Annotation targetAnnotation, Location targetLocation, string successWarningMessage)
+    {
+        // --- 5. 强制刷新预览区，显示PDF内容 ---
+        var previewControl = mainForm.PreviewControl;
+        try
+        {
+            Type[] parameterTypes = new Type[] { typeof(Location), typeof(Reference), typeof(SwissAcademic.Citavi.PreviewBehaviour), typeof(bool) };
+            var showLocationPreviewMethod = typeof(PreviewControl).GetMethod("ShowLocationPreview", BindingFlags.Public | BindingFlags.Instance, null, parameterTypes, null);
+            
+            if (showLocationPreviewMethod != null)
+            {
+                var previewBehaviourEnum = typeof(SwissAcademic.Citavi.PreviewBehaviour);
+                var skipEntryPageValue = Enum.Parse(previewBehaviourEnum, "SkipEntryPage");
+                object[] parameters = new object[] { targetLocation, targetLocation.Reference, skipEntryPageValue, true };
+                
+                showLocationPreviewMethod.Invoke(previewControl, parameters);
+                Program.ActiveProjectShell.ShowMainForm();
+            }
+        }
+        catch (Exception ex)
+        {
+            DebugMacro.WriteLine("调用预览时发生错误: " + ex.Message);
+            MessageBox.Show("预览PDF时出错: " + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
 
-	    try
-	    {
-	        // --- 1. 准备反射 ---
-	        PropertyInfo pdfViewControlProperty = previewControl.GetType().GetProperty("PdfViewControl", BindingFlags.NonPublic | BindingFlags.Instance);
-	        if (pdfViewControlProperty == null)
-	        {
-	            MessageBox.Show("无法获取PdfViewControl对象。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-	            return;
-	        }
-	        pdfViewControlObject = pdfViewControlProperty.GetValue(previewControl);
+        // --- 6. 执行精确跳转 ---
+        System.Threading.Thread.Sleep(1500); 
 
-	        Type[] goToAnnotationParamTypes = new Type[] { typeof(Annotation), typeof(EntityLink) };
-	        goToAnnotationMethod = pdfViewControlObject.GetType().GetMethod("GoToAnnotation", goToAnnotationParamTypes);
-	        if (goToAnnotationMethod == null)
-	        {
-	            MessageBox.Show("在PdfViewControl中未找到 GoToAnnotation 方法。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-	            return;
-	        }
+        PropertyInfo pdfViewControlProperty = previewControl.GetType().GetProperty("PdfViewControl", BindingFlags.NonPublic | BindingFlags.Instance);
+        object pdfViewControlObject = null;
+        if (pdfViewControlProperty != null)
+        {
+            pdfViewControlObject = pdfViewControlProperty.GetValue(previewControl);
+        }
 
-	        // --- 2. 调用预览方法 ---
-	        Type[] parameterTypes = new Type[] { typeof(Location), typeof(Reference), typeof(SwissAcademic.Citavi.PreviewBehaviour), typeof(bool) };
-	        var showLocationPreviewMethod = typeof(PreviewControl).GetMethod("ShowLocationPreview", BindingFlags.Public | BindingFlags.Instance, null, parameterTypes, null);
-	        
-	        if (showLocationPreviewMethod == null)
-	        {
-	            MessageBox.Show("无法找到ShowLocationPreview方法。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-	            return;
-	        }
+        if (pdfViewControlObject != null)
+        {
+            Type[] goToAnnotationParamTypes = new Type[] { typeof(Annotation), typeof(EntityLink) };
+            MethodInfo goToAnnotationMethod = pdfViewControlObject.GetType().GetMethod("GoToAnnotation", goToAnnotationParamTypes);
 
-	        var previewBehaviourEnum = typeof(SwissAcademic.Citavi.PreviewBehaviour);
-	        var skipEntryPageValue = Enum.Parse(previewBehaviourEnum, "SkipEntryPage");
-	        object[] parameters = new object[] { targetLocation, targetLocation.Reference, skipEntryPageValue, true };
-	        
-	        showLocationPreviewMethod.Invoke(previewControl, parameters);
-	        Program.ActiveProjectShell.ShowMainForm();
-	    }
-	    catch (Exception ex)
-	    {
-	        DebugMacro.WriteLine("调用预览时发生错误: " + ex.Message);
-	        MessageBox.Show("预览PDF时出错: " + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-	        return;
-	    }
-
-	    // --- 3. 优化：轮询执行跳转，直到成功或超时 ---
-	    int timeoutMs = 5000; // 超时时间：10秒
-	    int checkIntervalMs = 200; // 检查间隔：200毫秒
-	    int elapsedTime = 0;
-	    bool jumpSuccess = false;
-
-	    while (elapsedTime < timeoutMs)
-	    {
-	        try
-	        {
-	            // 尝试执行跳转
-	            object result = goToAnnotationMethod.Invoke(pdfViewControlObject, new object[] { targetAnnotation, null });
-
-	            if (result is bool && (bool)result)
-	            {
-	                // 如果方法返回true，表示跳转成功
-	                jumpSuccess = true;
-	                break; // 成功，跳出循环
-	            }
-	        }
-	        catch (Exception)
-	        {
-	            // 如果调用失败（比如PDF还没准备好），会抛出异常，我们捕获它并继续循环
-	        }
-
-	        // 等待一小段时间再重试
-	        System.Threading.Thread.Sleep(checkIntervalMs);
-	        elapsedTime += checkIntervalMs;
-	    }
-
-	    // --- 4. 根据最终结果显示消息 ---
-	    if (jumpSuccess)
-	    {
-	        MessageBox.Show(successWarningMessage, "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-	    }
-	    else
-	    {
-	        MessageBox.Show("在指定时间内未能完成PDF跳转。可能PDF加载过慢或注释不可见。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-	    }
-	}
+            if (goToAnnotationMethod != null)
+            {
+                try
+                {
+                    object result = goToAnnotationMethod.Invoke(pdfViewControlObject, new object[] { targetAnnotation, null });
+                    
+                    if (result is bool && !(bool)result)
+                    {
+                        MessageBox.Show("PDF已加载，但未能跳转到指定注释。可能该注释在当前PDF中不可见。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    else
+                    {
+                        // 使用传入的自定义警告信息
+                        MessageBox.Show(successWarningMessage, "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("调用 GoToAnnotation 时出错: " + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                MessageBox.Show("在PdfViewControl中未找到 GoToAnnotation 方法。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        else
+        {
+            MessageBox.Show("无法获取PdfViewControl对象。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
 
     /// <summary>
     /// 在Citavi界面中高亮指定的知识项，并跳转到其关联的PDF位置。

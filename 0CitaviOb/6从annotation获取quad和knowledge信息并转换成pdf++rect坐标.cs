@@ -69,7 +69,7 @@ public static class CitaviMacro
 			DebugMacro.WriteLine("---------------------------");
 
 			Clipboard.SetText(obsidianLink);
-			MessageBox.Show(string.Format("没有关联知识，生成只有坐标的链接，链接已复制到剪贴板！\n\n{0}", obsidianLink), "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			//MessageBox.Show(string.Format("没有关联知识，生成只有坐标的链接，链接已复制到剪贴板！\n\n{0}", obsidianLink), "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 		else
 		{
@@ -226,8 +226,8 @@ public static class CitaviMacro
         {
             // 如果关联了知识条目，使用知识条目的核心文本作为链接文本
             linkText = string.Format("{0}, p.{1}", parentDirectoryName+" "+ pdfFileName, pageIndex);
-            finalLink = string.Format("[{0}]({1}#page={2}&rect={3},{4},{5},{6}&color=yellow) KnowID：{7} AnnotID：{8}",
-                linkText, obsidianRelativePath, pageIndex, obsX1, obsY1, obsX2, obsY2, knowledgeItem.Id.ToStringSafe(), annotation.Id.ToStringSafe());
+            finalLink = string.Format("[{0}]({1}#page={2}&rect={3},{4},{5},{6}&color=yellow) AnnotID：{7}",
+                linkText, obsidianRelativePath, pageIndex, obsX1, obsY1, obsX2, obsY2, annotation.Id.ToStringSafe());
         }
         else
         {
