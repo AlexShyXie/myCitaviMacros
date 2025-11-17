@@ -2,7 +2,12 @@
 This is the repo of my custom Macros of citavi 6.8
 
 2025-11-08更新，更完善，需要的同学用GPT让ai总结一下就好了，非常简单。
+请注意：有些宏需要引用dll。
+配合MacroManagerWithAutoRef插件用会更好[myCitaviAddonCode](https://github.com/AlexShyXie/myCitaviAddonCode)
+> MacroManager插件加入AutoRef插件的功能，在MacroManager的edit和run运行的时候能够自动加载引用。
+> 原版AutoRef只有先打开macros editor，然后open一个新的宏文件，才会自动加载引用，相对鸡肋。
 
+![](vx_images/186647013814438.png)
 
 ## **Citavi 宏功能分类说明**
 
