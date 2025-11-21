@@ -9,8 +9,59 @@ This is the repo of my custom Macros of citavi 6.8
 
 ![](vx_images/186647013814438.png)
 
-## **Citavi 宏功能分类说明**
 
+## 2025-11-21更新0CitaviOb、AutoHotKeyURL配合0CitaviOb、Quicker动作预设
+所需的脚本，均在这里，有兴趣的可以自己配置。如果需要调试，可以请我喝杯果汁饮料😂😂😂。
+以下是联动的详细说明：
+### **一、 核心设计理念：协议化、自动化、无感化**
+整个方案的基石，是利用 **自定义 URL 协议** 将 Citavi 的每一个核心对象（文献条目、知识条目、PDF注释）变成一个可被外部程序精准调用的“网络资源”。
+-   **Citavi → Obsidian**：通过 Citavi 宏，一键生成包含核心信息与跳转链接的 Markdown 字符串，复制到剪贴板。
+-   **Obsidian → Citavi**：在 Obsidian 中点击链接，通过 AutoHotkey 脚本解析协议，自动激活 Citavi 并定位到对应条目，再通过模拟按键完成最终操作。
+
+整个过程，用户只需要“一键生成”和“一键点击”，中间所有的切换、定位、输入均由脚本在后台自动完成。
+### **二、 方案架构与四大组件**
+这套工作流由四个核心组件构成，各司其职，协同工作：
+
+1.  **Citavi 宏（C#）**：信息生成器。
+2.  **AutoHotkey 脚本（AHK v2）**：协议解析与任务调度中心。
+3.  **Windows 注册表（.reg 文件）**：协议的“户口本”。
+4.  **Quicker 动作（.json 文件）**：人机交互的“遥控器”。
+
+下面我们详细拆解每个组件的角色。
+### **三、 组件详解与实现原理**
+#### **1. Citavi 宏：在源头生成“智能链接”**
+我编写了三个 Citavi 宏，分别对应三种最常用的场景：
+-   **`4获取选中的reference制作ahk外链.cs`**：针对文献条目。
+-   **`5获取选中的knowledge制作ahk外链.cs`**：针对知识条目。
+-   **`6获取选中的annotation制作ahk外链.cs`**：针对 PDF 中的高亮或注释。
+
+**核心功能**：
+这些宏的核心任务是提取当前选中对象的元数据，并格式化为一个包含两部分内容的字符串：
+`(引用文本) [ahklink](ahk://citavi/goto?type=xxx&id=xxx&project=xxx&projectType=xxx)`
+**技术亮点**：
+-   **智能信息提取**：自动抓取作者、年份、标题、分组、核心陈述等信息，并格式化（如多作者自动变为“第一作者 et al.”）。
+-   **项目信息兼容**：通过 `GetProjectInfo` 函数，能智能识别项目是本地 `DesktopSQLite` 类型（获取文件路径）还是服务器 `DesktopSqlServer` 类型（获取项目名），并生成对应的 `project` 和 `projectType` 参数。
+-   **URL 编码**：对路径中的空格等特殊字符进行 `%20` 编码，确保链接的健壮性。
+
+**使用方式**：在 Citavi 中选中目标，通过快捷键或菜单运行宏，格式化好的链接就已复制到剪贴板。
+#### **2. AutoHotkey 脚本：后台的“交通指挥官”**
+这是整个方案的中枢神经，即 `ahkURLforCitavi.ahk`。它负责响应 `ahk://` 协议的调用。
+**核心工作流程**：
+1.  **接收与解析**：脚本启动后，通过 `A_Args[1]` 获取传入的完整 URL。使用 `RegExMatch` 精准提取 `type`、`id`、`project` 和 `projectType` 四个关键参数。
+2.  **URL 解码**：调用 `ChineseUrlDecode` 函数，对 `project` 参数进行解码，还原出真实的路径或项目名。
+3.  **智能窗口定位与激活**：
+    -   **分支判断**：根据 `projectType` 的值执行不同逻辑。    
+    -   **本地项目 (`DesktopSQLite`)**：    
+        -   首先，它会循环尝试匹配 `项目名: Reference Editor`、`项目名: Knowledge Organizer`、`项目名: Task Planner` 三种可能的窗口标题，确保无论用户上次停留在哪个工作区都能找到。        
+        -   如果找不到窗口，它会判断 Citavi 是否在运行。如果没运行，则直接 `Run(项目路径)` 打开；如果已在运行但项目未打开，则同样 `Run(项目路径)` 加载项目。        
+        -   打开后，会再次循环等待并激活目标窗口。        
+    -   **服务器/云端项目**：    
+        -   由于无法通过文件路径直接打开，脚本仅通过项目名匹配窗口标题。        
+        -   如果找不到，会直接弹出提示，告知用户“请手动在Citavi中打开此项目后再试”，逻辑清晰，不做无效操作。        
+4.  **执行最终操作**：窗口成功激活后，脚本将提取的 `id` 写入剪贴板，切换到英文输入法，然后根据 `type` 的值发送不同的快捷键组合（如 `!M02R` 对应 `Ref`），触发 Citavi 内部的“通过ID定位并选中”功能。
+
+
+## **Citavi 宏功能分类说明**
 ### **`0CitaviOb`：Citavi 与 Obsidian 深度联动**
 这是整个宏集合的精华部分，专注于打通 Citavi 和 Obsidian 之间的数据壁垒，构建双向知识流。
 *   **数据获取与预览系列**：
@@ -33,6 +84,7 @@ This is the repo of my custom Macros of citavi 6.8
     *   `失败CopyTextOfSelectedAnnotation.cs`：一个失败的尝试记录，可能用于调试或作为反面教材。
     *   `获取选中的annotation-knowledge信息-...版.cs`：多个版本的同功能宏，可能针对不同的预览场景（全屏、右侧面板等）进行了优化。
 
+> 使用展示：[CitaviOb联动展示，借用quicker和宏完美联动](https://www.bilibili.com/video/BV1tKypBXEc4/?vd_source=857596c2407193aa21fbf8196a4abfec)
 
 ### **`1影响因子及翻译`：文献信息增强**
 利用外部服务和 AI，批量丰富和翻译文献元数据。
