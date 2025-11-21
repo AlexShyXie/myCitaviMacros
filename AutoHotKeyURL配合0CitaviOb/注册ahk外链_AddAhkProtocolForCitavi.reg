@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\ahk]
+@="URL:ahk Protocol"
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\ahk\shell]
+
+[HKEY_CLASSES_ROOT\ahk\shell\open]
+
+[HKEY_CLASSES_ROOT\ahk\shell\open\command]
+@="\"C:\\Program Files\\AutoHotkey\\AutoHotkey.exe\" \"G:\\OneDrive - xiehui1573\\Appdata_my\\AutoHotKeyURL\\ahkURLforCitavi.ahk\" \"%1\""

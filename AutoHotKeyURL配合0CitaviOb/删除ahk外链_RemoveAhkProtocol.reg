@@ -1,0 +1,4 @@
+Windows Registry Editor Version 5.00
+
+; 删除整个 ahk 协议的注册表项及其下的所有子项和值
+[-HKEY_CLASSES_ROOT\ahk]
