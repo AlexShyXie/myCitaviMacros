@@ -1,5 +1,3 @@
-// autoref "SwissAcademic.Pdf.dll"
-
 using System;
 using System.Linq;
 using System.ComponentModel;
@@ -13,7 +11,7 @@ using SwissAcademic.Citavi.Metadata;
 using SwissAcademic.Citavi.Shell;
 using SwissAcademic.Collections;
 using System.Diagnostics;
-using SwissAcademic.Pdf;
+//using SwissAcademic.Pdf;
 /*
  * =================================================================================================
  *

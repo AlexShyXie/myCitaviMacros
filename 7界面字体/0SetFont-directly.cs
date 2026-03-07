@@ -24,7 +24,7 @@ public static class CitaviMacro
 		MainForm mainForm = Program.ActiveProjectShell.PrimaryMainForm;
 
 
-	    Font font = new Font(mainForm.Font.FontFamily,10); // 在此处指定所需的字体名称和字体大小
+	    Font font = new Font(mainForm.Font.FontFamily,12); // 在此处指定所需的字体名称和字体大小
         mainForm.Font = font;
 		// MessageBox.Show("设置成功");
 		
