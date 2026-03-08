@@ -13,7 +13,6 @@ using SwissAcademic.Citavi.Metadata;
 using SwissAcademic.Citavi.Shell;
 using SwissAcademic.Collections;
 using System.Diagnostics;
-//using SwissAcademic.Pdf;
 using SwissAcademic.Citavi.Shell.Controls.Preview; // 显式引用
 
 /*
@@ -67,6 +66,9 @@ public static class CitaviMacro
         }
         // 2. 从 Annotation 反向查找 KnowledgeItem
         KnowledgeItem linkedKnowledge = GetKnowledgeFromAnnotation(selectedAnnotation);
+		// 【调用新方法获取页码】
+	    int pageIndex = GetPageIndexSafely(selectedAnnotation);
+		
 		// 1. 先声明 out 变量
         string projectIdentifier;
         string projectType;
@@ -76,7 +78,9 @@ public static class CitaviMacro
 		
 		string ahkUrl = string.Format("ahk://citavi/goto?type=Annot&id={0}&project={1}&projectType={2}", selectedAnnotation.Id.ToStringSafe(), projectIdentifier.Replace(" ", "%20"),projectType);
 		// 将ahk链接包装在Obsidian的Markdown链接格式中，链接文本设为 "ahklink"
-		string obsidianLink = string.Format("[ahklink]({0})", ahkUrl);
+        // 【修改】将页码信息添加到链接文本中
+        string obsidianLink = string.Format("[ahklink p.{0}]({1})", pageIndex, ahkUrl);
+
 		string coreText = "";
 		if (linkedKnowledge == null)
         {
@@ -245,4 +249,50 @@ public static class CitaviMacro
 
         return null;
     }
+	
+	/// <summary>
+	/// 通过反射安全获取页码
+	/// </summary>
+	public static int GetPageIndexSafely(Annotation annotation)
+	{
+	    if (annotation == null) return 0;
+
+	    try
+	    {
+	        // 1. 获取 Quads 属性
+	        var quadsProperty = annotation.GetType().GetProperty("Quads");
+	        if (quadsProperty == null) return 0;
+
+	        // 2. 获取属性值
+	        var quadsValue = quadsProperty.GetValue(annotation, null);
+	        if (quadsValue == null) return 0;
+
+	        // 3. 关键修改：使用非泛型的 IEnumerable (System.Collections)
+	        // 这在 C# 4.x 中是最稳妥的，不需要知道集合内的具体类型
+	        var quadsEnumerable = quadsValue as System.Collections.IEnumerable;
+	        if (quadsEnumerable == null) return 0;
+
+	        // 4. 获取第一个元素
+	        var enumerator = quadsEnumerable.GetEnumerator();
+	        if (enumerator.MoveNext())
+	        {
+	            object firstQuad = enumerator.Current;
+	            if (firstQuad != null)
+	            {
+	                // 5. 从 Quad 对象反射获取 PageIndex
+	                var pageIndexProperty = firstQuad.GetType().GetProperty("PageIndex");
+	                if (pageIndexProperty != null)
+	                {
+	                    return (int)pageIndexProperty.GetValue(firstQuad, null);
+	                }
+	            }
+	        }
+	    }
+	    catch (Exception ex)
+	    {
+	        DebugMacro.WriteLine("获取页码失败: " + ex.Message);
+	    }
+
+	    return 0;
+	}
 }

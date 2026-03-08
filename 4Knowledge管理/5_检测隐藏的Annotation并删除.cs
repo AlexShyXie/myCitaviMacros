@@ -1,5 +1,3 @@
-// autoref "SwissAcademic.Pdf.dll"
-
 using System;
 using System.Linq;
 using System.ComponentModel;
@@ -13,7 +11,7 @@ using SwissAcademic.Citavi.Metadata;
 using SwissAcademic.Citavi.Shell;
 using SwissAcademic.Collections;
 using System.Diagnostics;
-	
+
 public static class CitaviMacro
 {
     public static void Main()
@@ -33,6 +31,9 @@ public static class CitaviMacro
 	        // 遍历所有location
 	        foreach (Location item in allLocations)
 	        {
+				string path = item.Address.Resolve().LocalPath;
+				//DebugMacro.WriteLine(location.Address.Resolve().LocalPath);
+				if (!path.EndsWith(".pdf")) continue;
 	            totalChecked++;
 	            int hiddenCount = 0;
 	            
@@ -75,7 +76,7 @@ public static class CitaviMacro
 	        // 生成报告
 	        string report = string.Format(
 	            "隐藏注释清理完成！\n\n" +
-	            "总共检查: {0} 个条目\n" +
+	            "总共检查: {0} 个PDF条目\n" +
 	            "发现隐藏注释: {1} 个\n" +
 	            "处理了: {2} 个条目\n\n",
 	            totalChecked, totalHiddenFound, processedCount);

@@ -11,7 +11,6 @@ using SwissAcademic.Citavi.Metadata;
 using SwissAcademic.Citavi.Shell;
 using SwissAcademic.Collections;
 using System.Diagnostics;
-//using SwissAcademic.Pdf;
 /*
  * =================================================================================================
  *
@@ -86,7 +85,8 @@ public static class CitaviMacro
 		//Location location = selectedLocations[0];
 		KnowledgeItem knowledgeItem = selectedKnowledgeItems[0];
 
-		
+        // 【新增】获取页码信息
+        string pageText = GetPageTextFromKnowledgeItem(knowledgeItem);
 		// 1. 先声明 out 变量
         string projectIdentifier;
         string projectType;
@@ -97,12 +97,47 @@ public static class CitaviMacro
 		string ahkUrl = string.Format("ahk://citavi/goto?type=Know&id={0}&project={1}&projectType={2}", knowledgeItem.Id.ToStringSafe(), projectIdentifier.Replace(" ", "%20"),projectType);
 		
 		// 将ahk链接包装在Obsidian的Markdown链接格式中，链接文本设为 "ahklink"
-		string obsidianLink = string.Format("[ahklink]({0})", ahkUrl);
+        // 【修改】将页码信息添加到链接文本中
+        string obsidianLink = string.Format("[ahklink p.{0}]({1})", pageText, ahkUrl);
+
 		string finalOutput = knowledgeItem.CoreStatement + " " + obsidianLink;
 		Clipboard.SetText(finalOutput);
 		DebugMacro.WriteLine(finalOutput);
 		
 	}
+
+    /// <summary>
+    /// 从知识条目中获取页码文本，如果 PageRange 有值则返回页码，否则返回 "NA"
+    /// </summary>
+    /// <param name="knowledgeItem">知识条目对象</param>
+    /// <returns>页码文本（如 "15"、"15-18" 或 "NA"）</returns>
+    public static string GetPageTextFromKnowledgeItem(KnowledgeItem knowledgeItem)
+    {
+        if (knowledgeItem == null) return "NA";
+
+        // 尝试从 PageRange 获取页码
+        if (knowledgeItem.PageRange != null)
+        {
+            // PageRange 包含起始页和结束页
+            string startPage = knowledgeItem.PageRange.StartPage.ToStringSafe();
+            string endPage = knowledgeItem.PageRange.EndPage.ToStringSafe();
+
+            // 如果起始页有值
+            if (!string.IsNullOrEmpty(startPage))
+            {
+                // 如果结束页也有值且不等于起始页，则返回页码范围
+                if (!string.IsNullOrEmpty(endPage) && startPage != endPage)
+                {
+                    return string.Format("{0}-{1}", startPage, endPage);
+                }
+                // 否则只返回起始页
+                return startPage;
+            }
+        }
+
+        // 如果 PageRange 没有值，返回 "NA"
+        return "NA";
+    }
 	
     /// <summary>
     /// 获取项目的标识符（路径或名称）和类型。
