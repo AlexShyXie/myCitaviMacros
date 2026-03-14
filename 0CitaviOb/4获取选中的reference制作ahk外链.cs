@@ -128,7 +128,11 @@ public static class CitaviMacro
 
         // --- 第二部分：生成ahk跳转链接 ---
         string referenceId = reference.Id.ToStringSafe();
-        
+
+		// 【新增】2. 获取 PDF 文件名或文献标题作为备份信息
+		string backupInfo = reference.Title;
+
+		
         // --- C# 4.6.1 兼容的写法 ---
         // 1. 先声明 out 变量
         string projectIdentifier;
@@ -137,11 +141,14 @@ public static class CitaviMacro
         // 2. 再调用方法并传递变量
         GetProjectInfo(Program.ActiveProjectShell.Project, out projectIdentifier, out projectType);
 
-        // 构建URL，始终包含 project 和 projectType 参数
-        string ahkUrl = string.Format("ahk://citavi/goto?type=Ref&id={0}&project={1}&projectType={2}", 
-            referenceId, 
-            projectIdentifier.Replace(" ","%20"), 
-            projectType);
+		string ahkUrl = string.Format(
+							    "ahk://citavi/goto?type=Ref&id={0}&project={1}&projectType={2}&Info={3}", 
+							    referenceId, 
+							    projectIdentifier.Replace(" ", "%20"), // 项目路径空格处理
+							    projectType,
+							    backupInfo.Replace(" ", "%20") // 【关键】对新加的信息进行URL编码，防止中文乱码
+							);		
+
 		
         // 将ahk链接包装在Obsidian的Markdown链接格式中，链接文本设为 "ahklink"
         string obsidianLink = string.Format("[ahklink]({0})", ahkUrl);

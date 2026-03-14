@@ -35,19 +35,28 @@ public static class CitaviMacro
 			// your code
 			// DebugMacro.WriteLine(reference.Doi);
 			List<Location> refLocation= reference.Locations.ToList();
+			string newFilepath = "";
             foreach (Location location in refLocation)
             {
 	            if (reference.Locations == null) continue;
 				if (string.IsNullOrEmpty(location.Address.ToString())) continue;
 				if (location.LocationType != LocationType.ElectronicAddress) continue;
 				string filePath = location.Address.ToString();
-				if (filePath.Contains("OneDrive - 中山大学"))
+				if (filePath.Contains("OCR") && filePath.Contains(".pdf"))
 				{
-					// DebugMacro.WriteLine(filePath);
-					location.Address.ReplaceTextInPaths(findText: "OneDrive - 中山大学", replacementText:"OneDrive - xiehui1573"); // 修改路径名，替换里面的目标
+					DebugMacro.WriteLine(filePath);
+					newFilepath = filePath.Replace("_OCR", ""); //"file:///E:/Downloads/JCO.pdf" ; 
+					//DebugMacro.WriteLine(filePath.Replace("_OCR", ""));
+					
+					// 修改单个附件路径
+					location.Address.ChangeFilePathAsync(
+					    new Uri(newFilepath),           // 新路径
+					    AttachmentAction.None       // 操作类型
+					 );
 					DebugMacro.WriteLine(location.Address.ToString());
-					// DebugMacro.WriteLine(location.LocationType.ToString());
-					//reference.Doi = filePath.Replace("https://doi.org/", "");
+
+					//location.Address.ReplaceTextInPaths(findText: "OneDrive - 中山大学", replacementText:"OneDrive - xiehui1573"); // 修改路径名，替换里面的目标
+					
 				}
 				// DebugMacro.WriteLine(reference.Doi);
 

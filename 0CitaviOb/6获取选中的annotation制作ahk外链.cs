@@ -76,7 +76,16 @@ public static class CitaviMacro
         // 2. 再调用方法并传递变量
         GetProjectInfo(Program.ActiveProjectShell.Project, out projectIdentifier, out projectType);
 		
-		string ahkUrl = string.Format("ahk://citavi/goto?type=Annot&id={0}&project={1}&projectType={2}", selectedAnnotation.Id.ToStringSafe(), projectIdentifier.Replace(" ", "%20"),projectType);
+		// 【新增】2. 获取 PDF 文件名或文献标题作为备份信息
+		string backupInfo = GetBackupInfo(selectedAnnotation);
+
+		string ahkUrl = string.Format(
+									    "ahk://citavi/goto?type=Annot&id={0}&project={1}&projectType={2}&Info={3}", 
+									    selectedAnnotation.Id.ToStringSafe(), 
+									    projectIdentifier.Replace(" ", "%20"), // 项目路径空格处理
+									    projectType,
+									    backupInfo.Replace(" ", "%20") // 【关键】对新加的信息进行URL编码，防止中文乱码
+									);
 		// 将ahk链接包装在Obsidian的Markdown链接格式中，链接文本设为 "ahklink"
         // 【修改】将页码信息添加到链接文本中
         string obsidianLink = string.Format("[ahklink p.{0}]({1})", pageIndex, ahkUrl);
@@ -295,4 +304,25 @@ public static class CitaviMacro
 
 	    return 0;
 	}
+	
+	/// <summary>
+	/// 获取备份信息（优先PDF文件名，其次Reference标题）
+	/// </summary>
+	public static string GetBackupInfo(Annotation annotation)
+	{
+	    try
+	    {
+	        // 优先尝试获取 PDF 文件名
+	        // Annotation -> EntityLinks -> Reference -> PDFLocation
+			return annotation.Location.Address.ToStringSafe().Replace("file:///","");
+	    }
+	    catch (Exception ex)
+	    {
+	        DebugMacro.WriteLine("获取备份信息失败: " + ex.Message);
+	    }
+	    
+	    return "未知来源"; // 默认值
+	}
+
+	
 }
