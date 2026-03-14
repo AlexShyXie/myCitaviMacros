@@ -111,7 +111,7 @@ public static class CitaviMacro
 		else
 		{
 			// 从文件里读取已经json化的journal信息，读取 JSON 文件内容
-			json = File.ReadAllText(@"E:\Downloads\journals.json");
+			json = File.ReadAllText(@"G:\OneDrive - xiehui1573\Appdata_my\各种软件Setting样式\Citavi重复\journals.json");
 			
         	//Journal[] journals = JsonConvert.DeserializeObject<Journal[]>(json);
 		}
